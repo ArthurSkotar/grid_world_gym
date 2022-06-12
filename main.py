@@ -28,7 +28,7 @@ def train(env, num_episodes, max_steps):
     state_size = 625  # total number of states (S)
     action_size = env.action_space.n  # total number of actions (A)
     # initialize a qtable with 0's for all Q-values
-    qtable = np.zeros((state_size, action_size))
+    qt = np.zeros((state_size, action_size))
     # hyperparameters
     learning_rate = 0.9
     discount_rate = 0.8
@@ -39,7 +39,7 @@ def train(env, num_episodes, max_steps):
 
         # reset the environment
         state = env.reset()
-        done = False
+        status = False
 
         for s in range(max_steps):
 
@@ -49,23 +49,23 @@ def train(env, num_episodes, max_steps):
                 action = env.action_space.sample()
             else:
                 # exploit
-                action = np.argmax(qtable[get_state(state), :])
+                action = np.argmax(qt[get_state(state), :])
 
             # take action and observe reward
-            new_state, reward, done, info = env.step(action)
+            new_state, reward, status, info = env.step(action)
 
             # Q-learning algorithm
-            qtable[get_state(state), action] = qtable[get_state(state), action] + learning_rate * (
-                    reward + discount_rate * np.max(qtable[get_state(new_state), :]) - qtable[get_state(state), action])
+            qt[get_state(state), action] = qt[get_state(state), action] + learning_rate * (
+                    reward + discount_rate * np.max(qt[get_state(new_state), :]) - qt[get_state(state), action])
 
             # Update to our new state
             state = new_state
             # if done, finish episode
-            if done == True:
+            if status == True:
                 break
         # Decrease epsilon
         epsilon = np.exp(-decay_rate * episode)
-    return qtable
+    return qt
 
 
 if __name__ == '__main__':
@@ -73,11 +73,13 @@ if __name__ == '__main__':
     # training variables
     num_episodes = 1000
     max_steps = 99  # per episode
-    with open('test.npy', 'rb') as f:
-        qtable = np.load(f)
+    # Uncomment this to load already trained network
+    # with open('test.npy', 'rb') as f:
+    #     qtable = np.load(f)
+    qtable = train(env, num_episodes, max_steps)
 
     print(f"Training completed over {num_episodes} episodes")
-    # input("Press Enter to watch trained agent...")
+    input("Press Enter to watch trained agent...")
 
     # watch trained agent
     state = env.reset()
